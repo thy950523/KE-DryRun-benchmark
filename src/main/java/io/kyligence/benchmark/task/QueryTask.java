@@ -10,7 +10,7 @@ import io.kyligence.benchmark.BenchmarkConfig;
 import io.kyligence.benchmark.entity.QueryHistoryDTO;
 import io.kyligence.benchmark.entity.QueryRequest;
 import io.kyligence.benchmark.entity.QueryResponse;
-import io.kyligence.benchmark.service.MetricCollector;
+import io.kyligence.benchmark.service.MetricsCollector;
 import io.kyligence.benchmark.utils.HttpUtil;
 import io.kyligence.benchmark.utils.SpringContext;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 public class QueryTask implements Runnable {
 
     private QueryHistoryDTO queryHistoryDTO;
-    private MetricCollector metricCollector;
+    private MetricsCollector metricCollector;
     private BenchmarkConfig benchmarkConfig;
 
     private static String QUERY_API_URL = "/kylin/api/query";
@@ -31,7 +31,7 @@ public class QueryTask implements Runnable {
         this.queryHistoryDTO = qh;
         this.round = round;
         this.taskId = qh.getQuery_id();
-        this.metricCollector = SpringContext.getBean(MetricCollector.class);
+        this.metricCollector = SpringContext.getBean(MetricsCollector.class);
         this.benchmarkConfig = SpringContext.getBean(BenchmarkConfig.class);
     }
 
@@ -53,8 +53,7 @@ public class QueryTask implements Runnable {
             // * analyse response
 
             // * metric collect
-            metricCollector.collect(round,taskId,response.getTraces());
-
+            metricCollector.collect(round,response.getDuration(),response.getTraces());
         } catch (Exception e) {
             log.error("error to ");
         }

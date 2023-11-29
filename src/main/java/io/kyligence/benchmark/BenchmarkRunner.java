@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import au.com.bytecode.opencsv.bean.CsvToBean;
 import au.com.bytecode.opencsv.bean.HeaderColumnNameMappingStrategy;
 import io.kyligence.benchmark.entity.QueryHistoryDTO;
+import io.kyligence.benchmark.service.MetricsCollector;
 import io.kyligence.benchmark.task.QueryTask;
 import lombok.extern.slf4j.Slf4j;
 
@@ -23,9 +24,13 @@ public class BenchmarkRunner implements ApplicationRunner {
 
     @Autowired
     ThreadPoolExecutor executor;
-
     @Autowired
     BenchmarkConfig benchmarkConfig;
+
+    @Autowired
+    MetricsCollector metricCollector;
+
+
 
     @Value("${file-dir:/Users/kyligence/Documents/105-test_lab/dump/full_2023_11_27_17_23_19/query_history}")
     private String fileDir;
@@ -60,6 +65,8 @@ public class BenchmarkRunner implements ApplicationRunner {
         }
 
         log.info("[STATUS]: ==========\tbenchmark finished\t==========");
+        metricCollector.endRound();
+        metricCollector.consoleReport();
         System.exit(0);
         // TODO 可以写个生产者消费者模式
     }
