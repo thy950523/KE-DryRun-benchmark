@@ -49,7 +49,7 @@ public class MetricsCollector {
         round = 0;
         totalHistogram = registry.histogram("total.histogram");
         //        roundHistogram = registry.histogram("round." + round + ".histogam");
-        stepHistogramMap = Maps.newHashMap();
+        stepHistogramMap = Maps.newTreeMap();
         roundStepHistogramMap = Maps.newHashMap();
         for (QuerySpanEnum step : QuerySpanEnum.values()) {
             if (step.isNeedMetric()) {
@@ -59,7 +59,7 @@ public class MetricsCollector {
                 //                roundStepHistogramMap.put(step.getName(), registry.histogram(histogramName));
             }
         }
-        roundSnapshotMap = Maps.newHashMap();
+        roundSnapshotMap = Maps.newTreeMap();
     }
 
     /**
