@@ -48,9 +48,9 @@ public class HttpUtil {
             //跳过SSL证书认证策略
             SSLConnectionSocketFactory sslFactory = createMySSLConnectionSocketFactory();
             // 配置同时支持 HTTP 和 HTTPS
-            Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
-                    .register("http", PlainConnectionSocketFactory.getSocketFactory())
-                    .register("https", sslFactory).build();
+            Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory> create()
+                    .register("http", PlainConnectionSocketFactory.getSocketFactory()).register("https", sslFactory)
+                    .build();
             // 创建连接池管理器对象
             connectionManager = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
             // 最大连接数
@@ -72,16 +72,13 @@ public class HttpUtil {
     private static CloseableHttpClient createHttpClient() {
         if (httpClient == null) {
             log.info("初始化httpClient, 连接服务器超时时间:{}, 获取数据的超时时间:{}", CONNECT_TIMEOUT, SOCKET_TIMEOUT);
-            RequestConfig defaultRequestConfig = RequestConfig.custom()
-                    .setConnectTimeout(CONNECT_TIMEOUT) // 设置服务器超时时间
+            RequestConfig defaultRequestConfig = RequestConfig.custom().setConnectTimeout(CONNECT_TIMEOUT) // 设置服务器超时时间
                     .setSocketTimeout(SOCKET_TIMEOUT) // 设定获取数据的超时时间
                     .build();
 
-            httpClient = HttpClients.custom()
-                    .setDefaultRequestConfig(defaultRequestConfig)
-                    .setConnectionManager(connectionManager)
-                    .setConnectionManagerShared(true)
-//                .evictExpiredConnections()
+            httpClient = HttpClients.custom().setDefaultRequestConfig(defaultRequestConfig)
+                    .setConnectionManager(connectionManager).setConnectionManagerShared(true)
+                    //                .evictExpiredConnections()
                     .build();
         }
         return httpClient;
@@ -141,9 +138,10 @@ public class HttpUtil {
             //发起请求
             response = httpClient.execute(httpPost);
 
-            log.debug("[http-call]-[{}]-[status:{}]",url,response.getStatusLine().getStatusCode());
+            log.debug("[http-call]-[{}]-[status:{}]", url, response.getStatusLine().getStatusCode());
             //处理返回结果
             if (response.getStatusLine().getStatusCode() < 200 || response.getStatusLine().getStatusCode() > 300) {
+                log.error("[http-call]-[{}]-[error]:{}", url, response);
                 throw new HttpRequestException(result);
             }
             HttpEntity entity = response.getEntity();
@@ -235,7 +233,6 @@ public class HttpUtil {
         SSLContext sslcontext = new SSLContextBuilder().loadTrustMaterial(null, (chain, authType) -> true).build();
         return new SSLConnectionSocketFactory(sslcontext);
     }
-
 
     /**
      * 关闭CloseableHttpResponse对象

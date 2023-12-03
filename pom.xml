@@ -64,6 +64,11 @@
             <version>30.1.1-jre</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+        </dependency>
+
         <!-- metric -->
         <dependency>
             <groupId>io.dropwizard.metrics</groupId>

@@ -16,6 +16,16 @@ public enum QuerySpanEnum {
     SQL_PUSHDOWN_TRANSFORMATION("SQL_PUSHDOWN_TRANSFORMATION",true),
     HIT_CACHE("HIT_CACHE",true);
 
+
+    public static boolean contains(String spanName){
+        for (QuerySpanEnum span : QuerySpanEnum.values()) {
+            if (span.getName().equalsIgnoreCase(spanName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Getter
     private String name;
     @Getter

@@ -23,8 +23,9 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class SQLResponseTrace extends Metrics {
+public class SQLResponseTrace {
     private String name;
+    private String type;
     private String group;
     private long duration;
 

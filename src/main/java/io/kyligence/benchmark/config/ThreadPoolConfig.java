@@ -4,26 +4,23 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import io.kyligence.benchmark.BenchmarkConfig;
 import lombok.val;
 
 @Configuration
 public class ThreadPoolConfig {
 
-    @Value("${concurrency:4}")
-    private Integer CORE_POOL_SIZE;
-    @Value("${concurrency:4}")
-    private Integer MAX_POOL_SIZE;
-    @Value("${queue-size:2048}")
-    private Integer QUEUE_SIZE;
+    @Autowired
+    BenchmarkConfig config;
 
     @Bean("executor")
     public ThreadPoolExecutor threadPoolExecutor() {
-        val threadPoolExecutor = new ThreadPoolExecutor(CORE_POOL_SIZE, MAX_POOL_SIZE, 15, TimeUnit.SECONDS,
-                new ArrayBlockingQueue<>(QUEUE_SIZE));
+        val threadPoolExecutor = new ThreadPoolExecutor(config.CONCURRENCY, config.CONCURRENCY, 15, TimeUnit.SECONDS,
+                new ArrayBlockingQueue<>(config.QUEUE_SIZE));
         threadPoolExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         return threadPoolExecutor;
     }
