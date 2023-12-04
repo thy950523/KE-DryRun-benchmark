@@ -14,6 +14,7 @@ import org.apache.http.util.TextUtils;
 
 import java.util.Base64;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 @Slf4j
 public class QueryTask implements Runnable {
@@ -28,11 +29,13 @@ public class QueryTask implements Runnable {
      * query-id
      */
     private String taskId;
+    private CountDownLatch latch;
 
-    public QueryTask(QueryHistoryDTO qh, Integer round) {
+    public QueryTask(QueryHistoryDTO qh, Integer round, CountDownLatch latch) {
         this.queryHistoryDTO = qh;
         this.round = round;
         this.taskId = qh.getQuery_id();
+        this.latch = latch;
         this.metricCollector = SpringContext.getBean(MetricsCollector.class);
         this.benchmarkConfig = SpringContext.getBean(BenchmarkConfig.class);
     }
@@ -53,14 +56,13 @@ public class QueryTask implements Runnable {
             QueryResponse response = JSONObject.toJavaObject(JSONObject.parseObject(result), QueryResponse.class);
             // * analyse response
 
-
             // * metric collect
-            metricCollector.collect(queryRequest,response.getDuration(), response.getTraces());
+            metricCollector.collect(queryRequest, response);
         } catch (Exception e) {
             log.error("query process with err", e);
+        }finally {
+            latch.countDown();
         }
-
-        // * exception process
     }
 
     public static void main(String[] args) {

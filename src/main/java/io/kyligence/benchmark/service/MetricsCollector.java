@@ -6,6 +6,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.Maps;
 import io.kyligence.benchmark.BenchmarkConfig;
 import io.kyligence.benchmark.entity.QueryRequest;
+import io.kyligence.benchmark.entity.QueryResponse;
 import io.kyligence.benchmark.entity.RoundMetricsSnapshot;
 import io.kyligence.benchmark.entity.SQLResponseTrace;
 import io.kyligence.benchmark.enums.QuerySpanEnum;
@@ -19,6 +20,7 @@ import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Component
@@ -46,6 +48,10 @@ public class MetricsCollector {
     private String maxQuerySql;
     @Getter
     private List<SQLResponseTrace> maxQueryTraceList;
+    @Getter
+    private AtomicInteger totalSuccess;
+    @Getter
+    private AtomicInteger totalFailed;
 
 
     /**
@@ -58,6 +64,8 @@ public class MetricsCollector {
      */
     private String maxRoundQueryId;
     private String maxRoundQuerySql;
+    private AtomicInteger roundSuccess;
+    private AtomicInteger roundFailed;
     private List<SQLResponseTrace> maxRoundQueryTraceList;
 
 
@@ -70,8 +78,10 @@ public class MetricsCollector {
     @PostConstruct
     public void init() {
         MetricRegistry.name("ke-benchmark");
-        registry = new MetricRegistry();
-        round = 0;
+        this.registry = new MetricRegistry();
+        this.round = 0;
+        this.totalSuccess = new AtomicInteger();
+        this.totalFailed = new AtomicInteger();
         totalHistogram = registry.histogram("total.histogram");
         stepHistogramMap = Maps.newTreeMap((a1, a2) -> {
             return a1.getSequence() - a2.getSequence();
@@ -103,6 +113,8 @@ public class MetricsCollector {
         this.maxRoundQueryTraceList = null;
         this.maxRoundQueryId = null;
         this.maxRoundQuerySql = null;
+        this.roundSuccess = new AtomicInteger();
+        this.roundFailed = new AtomicInteger();
     }
 
     public void endRound() {
@@ -112,16 +124,29 @@ public class MetricsCollector {
         roundMetricsSnapshot.setMaxQueryId(this.maxRoundQueryId);
         roundMetricsSnapshot.setMaxQueryTraceList(this.maxRoundQueryTraceList);
         roundMetricsSnapshot.setMaxQuerySql(this.maxRoundQuerySql);
+        roundMetricsSnapshot.setSuccessCnt(this.roundSuccess.get());
+        roundMetricsSnapshot.setFailedCnt(this.roundFailed.get());
         roundStepHistogramMap.forEach((k, v) -> {
             roundMetricsSnapshot.addStepSnapshot(k, v.getSnapshot());
         });
         roundSnapshotMap.put(round, roundMetricsSnapshot);
     }
 
-    public void collect(QueryRequest request, Long duration, List<SQLResponseTrace> metricsList) {
+    public void collect(QueryRequest request, QueryResponse response) {
+        Long duration = response.getDuration();
+        List<SQLResponseTrace> metricsList = response.getTraces();
+        // success & failed count
+        if(response.isException()){
+            this.totalFailed.incrementAndGet();
+            this.roundFailed.incrementAndGet();
+        }else{
+            this.totalSuccess.incrementAndGet();
+            this.roundSuccess.incrementAndGet();
+        }
+
         // * update total info
         totalHistogram.update(duration);
-        if(totalHistogram.getSnapshot().getMax()==duration){
+        if (totalHistogram.getSnapshot().getMax() == duration) {
             this.maxQueryId = request.getQueryId();
             this.maxQueryTraceList = metricsList;
             this.maxQuerySql = request.getSql();
@@ -140,7 +165,7 @@ public class MetricsCollector {
 
         // * update round metrics
         roundHistogram.update(duration);
-        if(roundHistogram.getSnapshot().getMax()==duration){
+        if (roundHistogram.getSnapshot().getMax() == duration) {
             this.maxRoundQueryId = request.getQueryId();
             this.maxRoundQueryTraceList = metricsList;
             this.maxRoundQuerySql = request.getSql();

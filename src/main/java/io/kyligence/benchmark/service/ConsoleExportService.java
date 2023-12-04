@@ -61,6 +61,8 @@ public class ConsoleExportService implements ExportService {
 
         String totalInfo = String.format("\n\n===== Total_Info =====") +
                 String.format("\n%-15s %d", "Total_Count：", totalHistogram.getCount()) +
+                String.format("\n%-15s %d", "Success：", metricsCollector.getTotalSuccess().get()) +
+                String.format("\n%-15s %d", "Failed：", metricsCollector.getTotalFailed().get()) +
                 String.format(" \n%-15s %.2f", "Avg_Duration：", snapshot.getMean()) +
                 String.format(" \n%-15s %d", "Min_Duration：", snapshot.getMin()) +
                 String.format(" \n%-15s %d", "Max_Duration：", snapshot.getMax()) +
@@ -94,6 +96,8 @@ public class ConsoleExportService implements ExportService {
             String totalInfo = String.format("----------------------------------------" +
                     "\n\n\n--- Round%d ---", k) +
                     String.format("\n%-15s %d", "Total_Count：", snapshot.size()) +
+                    String.format("\n%-15s %d", "Success：", v.getSuccessCnt()) +
+                    String.format("\n%-15s %d", "Failed：", v.getFailedCnt()) +
                     String.format(" \n%-15s %.2f", "Avg_Duration：", snapshot.getMean()) +
                     String.format(" \n%-15s %d", "Min_Duration：", snapshot.getMin()) +
                     String.format(" \n%-15s %d", "Max_Duration：", snapshot.getMax()) +

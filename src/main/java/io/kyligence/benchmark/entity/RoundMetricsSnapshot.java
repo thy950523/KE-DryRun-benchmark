@@ -23,6 +23,8 @@ public class RoundMetricsSnapshot {
     private String maxQueryId;
     private String maxQuerySql;
     private List<SQLResponseTrace> maxQueryTraceList;
+    private Integer successCnt;
+    private Integer failedCnt;
 
     public RoundMetricsSnapshot(Integer round) {
         this.round = round;
