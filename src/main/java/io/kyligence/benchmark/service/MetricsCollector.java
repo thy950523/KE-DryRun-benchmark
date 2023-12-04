@@ -1,6 +1,5 @@
 package io.kyligence.benchmark.service;
 
-import com.alibaba.fastjson.JSONObject;
 import com.codahale.metrics.ConsoleReporter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
@@ -166,6 +165,6 @@ public class MetricsCollector {
     public void consoleReport() {
         ConsoleReporter consoleReporter = ConsoleReporter.forRegistry(registry).convertRatesTo(TimeUnit.SECONDS)
                 .convertRatesTo(TimeUnit.MILLISECONDS).build();
-        System.out.println(JSONObject.toJSONString(this.totalHistogram.getSnapshot()));
+//        System.out.println(JSONObject.toJSONString(this.totalHistogram.getSnapshot()));
     }
 }

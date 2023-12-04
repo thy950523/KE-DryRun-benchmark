@@ -3,6 +3,7 @@ package io.kyligence.benchmark;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import io.kyligence.benchmark.exception.HttpRequestException;
 import io.kyligence.benchmark.utils.HttpUtil;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,8 @@ public class BenchmarkConfig {
     public Integer ROUNDS;
     @Value("${args.check.enabled:true}")
     public boolean CHECK_ENABLED;
+    @Value("${metadata.recover.enabled:false}")
+    private boolean METADATA_RECOVER_ENABLED;
 
     /** 并发配置 */
     @Value("${concurrency:4}")

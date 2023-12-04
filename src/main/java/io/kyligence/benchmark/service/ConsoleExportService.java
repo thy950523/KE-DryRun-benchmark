@@ -37,6 +37,8 @@ public class ConsoleExportService implements ExportService {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
             writer.write(reportInfo.toString());
             writer.flush();
+            String endString = String.format("\n\n________ %-20s%s _______ \n\n", " Benchmark Report has been stored at :", file.getAbsolutePath());
+            System.out.println(colorfulText(endString, "36"));
         } catch (Exception e) {
             log.error(" write report file err ", e);
         }
@@ -72,7 +74,7 @@ public class ConsoleExportService implements ExportService {
         Map<QuerySpanEnum, Histogram> stepHistogramMap = metricsCollector.getStepHistogramMap();
         System.out.println(colorfulText("\n\n-- Steps_AVG_Info --", "32"));
         stepHistogramMap.forEach((k, v) -> {
-            String info = String.format("%-30s %.2f", k.getName(), v.getSnapshot().getMean());
+            String info = String.format("%-30s %-5s %-10.2f", k.getName(), v.getSnapshot().getMean() > 0 ? "√" : "×", v.getSnapshot().getMean());
             System.out.println(colorfulText(info, "32"));
         });
 
@@ -101,7 +103,7 @@ public class ConsoleExportService implements ExportService {
             System.out.println(colorfulText(totalInfo, "35"));
             System.out.println(colorfulText("\n\n-- Steps_AVG_Info --", "35"));
             stepSnapshotMap.forEach((k1, v1) -> {
-                String info = String.format("%-30s %.2f", k1.getName(), v1.getMean());
+                String info = String.format("%-30s %-5s %-10.2f", k1.getName(), v1.getMean() > 0 ? "√" : "×", v1.getMean());
                 System.out.println(colorfulText(info, "35"));
             });
         });

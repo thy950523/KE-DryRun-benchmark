@@ -1,4 +1,4 @@
-package io.kyligence.benchmark;
+package io.kyligence.benchmark.exception;
 
 import lombok.Getter;
 

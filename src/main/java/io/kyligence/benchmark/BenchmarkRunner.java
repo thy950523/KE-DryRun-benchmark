@@ -66,11 +66,8 @@ public class BenchmarkRunner implements ApplicationRunner {
             metricCollector.endRound();
             round++;
         }
-
-        log.info("[STATUS]: ==========\tbenchmark finished\t==========");
         exportService.export();
-
-        metricCollector.consoleReport();
+        log.info("[STATUS]: ==========\tbenchmark finished\t==========");
         System.exit(0);
         // TODO 可以写个生产者消费者模式
     }

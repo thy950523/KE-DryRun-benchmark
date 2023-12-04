@@ -10,7 +10,7 @@
     </parent>
     <groupId>io.kyligence</groupId>
     <artifactId>ke-dryrun-benchmark</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0</version>
     <name>ke-dryrun-benchmark</name>
     <description>benchmark tool 4 ke performance</description>
 
