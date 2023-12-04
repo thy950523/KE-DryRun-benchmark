@@ -55,7 +55,7 @@ public class QueryTask implements Runnable {
 
 
             // * metric collect
-            metricCollector.collect(response.getDuration(), response.getTraces());
+            metricCollector.collect(queryRequest,response.getDuration(), response.getTraces());
         } catch (Exception e) {
             log.error("query process with err", e);
         }
@@ -68,7 +68,7 @@ public class QueryTask implements Runnable {
         queryRequest.setQueryId("28e3422a-fde8-4db3-84f9-83c08f767646");
         queryRequest.setSql("select count(0) from dates");
         queryRequest.setProject("zhuzhong_project");
-        queryRequest.setDryRunMode(true);
+        queryRequest.setDry_run_mode(true);
         Map<String, String> headers = Maps.newHashMap();
         headers.put("Authorization", "Basic QURNSU46S1lMSU4=");
         System.out.println("\u001B[30mThis is red text\u001B[0m");

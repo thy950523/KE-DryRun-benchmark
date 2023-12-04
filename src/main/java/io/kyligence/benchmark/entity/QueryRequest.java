@@ -18,13 +18,13 @@
 
 package io.kyligence.benchmark.entity;
 
-import java.io.Serializable;
-import java.util.Map;
-import java.util.Objects;
-
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.io.Serializable;
+import java.util.Map;
+import java.util.Objects;
 
 @Getter
 @Setter
@@ -54,8 +54,8 @@ public class QueryRequest implements Serializable {
     private boolean includeHeader;
 
     private boolean ifBigQuery = false;
-    
-    private boolean dryRunMode = false;
+
+    private boolean dry_run_mode = false;
 
     private Map<String, String> backdoorToggles;
 
@@ -72,7 +72,7 @@ public class QueryRequest implements Serializable {
         this.project = qh.getProject_name();
         this.limit = 0;
         this.offset = 500;
-        this.dryRunMode = true;
+        this.dry_run_mode = true;
     }
 
     @Override

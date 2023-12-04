@@ -19,7 +19,7 @@ import java.util.Map;
 @Slf4j
 public class BenchmarkConfig {
     /** 核心配置 */
-    @Value("${file-dir:}")
+    @Value("${file.dir:}")
     public String FILE_DIR;
     @Value("${rounds:3}")
     public Integer ROUNDS;
@@ -41,6 +41,12 @@ public class BenchmarkConfig {
     public String KYLIN_USER_NAME;
     @Value("${kylin.passwd:KYLIN}")
     public String KYLIN_PASSWD;
+
+    /**
+     * 报告相关
+     */
+    @Value("${report.output.dir:.}")
+    public String REPORT_OUTPUT_DIR;
 
 
     public boolean checkArgs() {

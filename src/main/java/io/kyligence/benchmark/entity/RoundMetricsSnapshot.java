@@ -1,13 +1,14 @@
 package io.kyligence.benchmark.entity;
 
-import java.util.Map;
-
 import com.codahale.metrics.Snapshot;
 import com.google.common.collect.Maps;
-
+import io.kyligence.benchmark.enums.QuerySpanEnum;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * snapshot of each round
@@ -18,14 +19,18 @@ import lombok.Setter;
 public class RoundMetricsSnapshot {
     private Integer round;
     private Snapshot roundSnapshot;
-    private Map<String, Snapshot> stepSnapshotMap;
+    private Map<QuerySpanEnum, Snapshot> stepSnapshotMap;
+    private String maxQueryId;
+    private String maxQuerySql;
+    private List<SQLResponseTrace> maxQueryTraceList;
 
     public RoundMetricsSnapshot(Integer round) {
         this.round = round;
-        stepSnapshotMap = Maps.newHashMap();
+        stepSnapshotMap = Maps.newTreeMap((a,b)->{
+            return a.getSequence() - b.getSequence();});
     }
 
-    public void addStepSnapshot(String step,Snapshot snapshot){
+    public void addStepSnapshot(QuerySpanEnum step,Snapshot snapshot){
         stepSnapshotMap.put(step, snapshot);
     }
 

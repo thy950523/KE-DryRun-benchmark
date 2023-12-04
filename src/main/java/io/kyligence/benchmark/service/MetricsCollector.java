@@ -6,6 +6,7 @@ import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.Maps;
 import io.kyligence.benchmark.BenchmarkConfig;
+import io.kyligence.benchmark.entity.QueryRequest;
 import io.kyligence.benchmark.entity.RoundMetricsSnapshot;
 import io.kyligence.benchmark.entity.SQLResponseTrace;
 import io.kyligence.benchmark.enums.QuerySpanEnum;
@@ -29,16 +30,41 @@ public class MetricsCollector {
     private BenchmarkConfig benchmarkConfig;
 
     private Integer round;
-    /** total histograms */
+    /**
+     * total histograms
+     */
     private MetricRegistry registry;
     @Getter
     private Histogram totalHistogram;
     @Getter
-    private Map<String, Histogram> stepHistogramMap;
-    /** round histogram， 每一轮开启新的收集 */
+    private Map<QuerySpanEnum, Histogram> stepHistogramMap;
+    /**
+     * total slowest query info
+     */
+    @Getter
+    private String maxQueryId;
+    @Getter
+    private String maxQuerySql;
+    @Getter
+    private List<SQLResponseTrace> maxQueryTraceList;
+
+
+    /**
+     * round histogram， 每一轮开启新的收集
+     */
     private Histogram roundHistogram;
-    private Map<String, Histogram> roundStepHistogramMap;
-    /** metrics snapshots 存储每一轮的metric快照 */
+    private Map<QuerySpanEnum, Histogram> roundStepHistogramMap;
+    /**
+     * round slowest query info
+     */
+    private String maxRoundQueryId;
+    private String maxRoundQuerySql;
+    private List<SQLResponseTrace> maxRoundQueryTraceList;
+
+
+    /**
+     * metrics snapshots 存储每一轮的metric快照
+     */
     @Getter
     private Map<Integer, RoundMetricsSnapshot> roundSnapshotMap;
 
@@ -48,18 +74,19 @@ public class MetricsCollector {
         registry = new MetricRegistry();
         round = 0;
         totalHistogram = registry.histogram("total.histogram");
-        //        roundHistogram = registry.histogram("round." + round + ".histogam");
-        stepHistogramMap = Maps.newTreeMap();
-        roundStepHistogramMap = Maps.newHashMap();
+        stepHistogramMap = Maps.newTreeMap((a1, a2) -> {
+            return a1.getSequence() - a2.getSequence();
+        });
+        roundStepHistogramMap = Maps.newTreeMap((a1, a2) -> {
+            return a1.getSequence() - a2.getSequence();
+        });
         for (QuerySpanEnum step : QuerySpanEnum.values()) {
             if (step.isNeedMetric()) {
                 String histogramName = String.format("total.%s.histogram", step.getName());
-                stepHistogramMap.put(step.getName(), registry.histogram(histogramName));
-                //                histogramName = String.format("round.%d.%s.histogram", round, step.getName());
-                //                roundStepHistogramMap.put(step.getName(), registry.histogram(histogramName));
+                stepHistogramMap.put(step, registry.histogram(histogramName));
             }
         }
-        roundSnapshotMap = Maps.newTreeMap();
+        roundSnapshotMap = Maps.newHashMap();
     }
 
     /**
@@ -71,29 +98,40 @@ public class MetricsCollector {
         for (QuerySpanEnum step : QuerySpanEnum.values()) {
             if (step.isNeedMetric()) {
                 String histogramName = String.format("round.%d.%s.histogram", round, step.getName());
-                roundStepHistogramMap.put(step.getName(), registry.histogram(histogramName));
+                roundStepHistogramMap.put(step, registry.histogram(histogramName));
             }
         }
+        this.maxRoundQueryTraceList = null;
+        this.maxRoundQueryId = null;
+        this.maxRoundQuerySql = null;
     }
 
     public void endRound() {
         // save snapShots
         RoundMetricsSnapshot roundMetricsSnapshot = new RoundMetricsSnapshot(round);
         roundMetricsSnapshot.setRoundSnapshot(roundHistogram.getSnapshot());
+        roundMetricsSnapshot.setMaxQueryId(this.maxRoundQueryId);
+        roundMetricsSnapshot.setMaxQueryTraceList(this.maxRoundQueryTraceList);
+        roundMetricsSnapshot.setMaxQuerySql(this.maxRoundQuerySql);
         roundStepHistogramMap.forEach((k, v) -> {
             roundMetricsSnapshot.addStepSnapshot(k, v.getSnapshot());
         });
         roundSnapshotMap.put(round, roundMetricsSnapshot);
     }
 
-    public void collect(Long duration, List<SQLResponseTrace> metricsList) {
+    public void collect(QueryRequest request, Long duration, List<SQLResponseTrace> metricsList) {
+        // * update total info
         totalHistogram.update(duration);
-        roundHistogram.update(duration);
+        if(totalHistogram.getSnapshot().getMax()==duration){
+            this.maxQueryId = request.getQueryId();
+            this.maxQueryTraceList = metricsList;
+            this.maxQuerySql = request.getSql();
+        }
         Map<String, SQLResponseTrace> metricsMap = metricsList.stream()
                 .collect(Collectors.toMap(SQLResponseTrace::getName, p -> p));
         // ! 没有经历的Step 也收集下信息，方便后面详情的时候可以清楚的看到那些Step没有经历
         stepHistogramMap.forEach((k, v) -> {
-            val metrics = metricsMap.get(k);
+            val metrics = metricsMap.get(k.getName());
             if (metrics != null) {
                 v.update(metrics.getDuration());
             } else {
@@ -101,8 +139,15 @@ public class MetricsCollector {
             }
         });
 
+        // * update round metrics
+        roundHistogram.update(duration);
+        if(roundHistogram.getSnapshot().getMax()==duration){
+            this.maxRoundQueryId = request.getQueryId();
+            this.maxRoundQueryTraceList = metricsList;
+            this.maxRoundQuerySql = request.getSql();
+        }
         roundStepHistogramMap.forEach((k, v) -> {
-            val metrics = metricsMap.get(k);
+            val metrics = metricsMap.get(k.getName());
             if (metrics != null) {
                 v.update(metrics.getDuration());
             } else {
@@ -121,9 +166,6 @@ public class MetricsCollector {
     public void consoleReport() {
         ConsoleReporter consoleReporter = ConsoleReporter.forRegistry(registry).convertRatesTo(TimeUnit.SECONDS)
                 .convertRatesTo(TimeUnit.MILLISECONDS).build();
-        //        consoleReporter.report();
-        //        CsvReporter csvReporter = CsvReporter.forRegistry(registry).build(new File("/Users/kyligence/Downloads/"));
-        //        csvReporter.report();
-        System.out.println(JSONObject.toJSONString(this.roundSnapshotMap));
+        System.out.println(JSONObject.toJSONString(this.totalHistogram.getSnapshot()));
     }
 }

@@ -42,7 +42,7 @@ public class BenchmarkRunner implements ApplicationRunner {
         int round = 1;
         // * rounds start
         while (round <= benchmarkConfig.ROUNDS) {
-            log.info("[RUN]-[NEW_ROUND]：start to run round {} !!", round);
+            log.info("[RUN]-[NEW_ROUND]：start to run round {}", round);
             metricCollector.startRound();
             // * csv parse
             File csvDir = new File(benchmarkConfig.FILE_DIR);
@@ -54,13 +54,13 @@ public class BenchmarkRunner implements ApplicationRunner {
                 List<QueryHistoryDTO> queryHistoryDTOList = csvToBean.parse(strategy, fileReader);
                 for (QueryHistoryDTO qh : queryHistoryDTOList) {
                     // wrap queryTask
-                    executor.submit(new QueryTask(qh, 1));
+                    executor.submit(new QueryTask(qh, round));
                 }
             }
 
             while (executor.getQueue().size() > 0) {
-                log.info("current round:{} ,query task remains : {}", round, executor.getQueue().size());
-                Thread.sleep(5000);
+                log.info("...... current round:{} ,query task remains : {}", round, executor.getQueue().size());
+                Thread.sleep(3000);
             }
             // ! 只有在上一轮全部跑完再开始下一轮
             metricCollector.endRound();
