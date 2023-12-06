@@ -12,7 +12,7 @@ mvn clean install
     ```shell
     java \
     -Dfile.dir=./samples/query_history \
-    -Dkylin.query.node=127.0.0.1:7070 \
+    -Dkylin.query.node=10.1.2.134:8899 \
     -Dkylin.userName=ADMIN \
     -Dkylin.passwd=KYLIN \
     -jar target/ke-dryrun-benchmark-1.0.0.jar 
@@ -20,8 +20,7 @@ mvn clean install
 3. Benchamark data will present in the console, and store as file.
 
 ### more
-> - Set your file.dir、node、user、passwd 
-> <br>
+> - Set your file.dir、node、user、passwd
 > - If it doesn't work, check the version of ke-dryrun-benchmark is right? 
 
 ## Configurations
