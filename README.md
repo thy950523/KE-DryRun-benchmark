@@ -11,7 +11,7 @@ mvn clean install
 2. Run the scripts
     ```shell
     java \
-    -Dfile.dir=./samples/query_history \
+    -Dfile.dir=./samples/query_history1 \
     -Dkylin.query.node=10.1.2.134:8899 \
     -Dkylin.userName=ADMIN \
     -Dkylin.passwd=KYLIN \
