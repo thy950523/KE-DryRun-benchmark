@@ -70,8 +70,8 @@ public class QueryRequest implements Serializable {
         this.queryId = qh.getQuery_id();
         this.sql = qh.getSql_pattern();
         this.project = qh.getProject_name();
-        this.limit = 0;
-        this.offset = 500;
+        this.limit = 500;
+        this.offset = 0;
         this.dry_run_mode = true;
     }
 

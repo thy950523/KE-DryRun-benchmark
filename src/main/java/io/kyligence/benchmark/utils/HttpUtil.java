@@ -139,7 +139,7 @@ public class HttpUtil {
             log.debug("[http-call]-[{}]-[status:{}]", url, response.getStatusLine().getStatusCode());
             //处理返回结果
             if (response.getStatusLine().getStatusCode() < 200 || response.getStatusLine().getStatusCode() > 300) {
-                log.error("[http-call]-[{}]-[error]:{}", url, response);
+                log.error("[http-call]-[{}]-[error]:{}", url, EntityUtils.toString(response.getEntity(), "UTF-8"));
                 throw new HttpRequestException(result);
             }
             HttpEntity entity = response.getEntity();

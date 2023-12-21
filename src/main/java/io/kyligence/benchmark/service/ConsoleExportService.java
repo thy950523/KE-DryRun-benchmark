@@ -28,15 +28,24 @@ public class ConsoleExportService implements ExportService {
 
     @Override
     public void export() {
-        File file = new File(config.getREPORT_OUTPUT_DIR() + File.separator + "benchmark-report-" + System.currentTimeMillis() + ".txt");
+        long timeStamp = System.currentTimeMillis();
+        File file = new File(config.getREPORT_OUTPUT_DIR() + File.separator + "benchmark-report-" + timeStamp + ".txt");
+        File failedSqlFile = new File(config.getREPORT_OUTPUT_DIR() + File.separator + "benchmark-report-" + timeStamp + "-fail.txt");
         reportInfo = new StringBuilder();
         log.info("[ REPORT ] ==========\tbenchmark report is as follow : ==========\t");
         processTotalMetrics();
         processRoundMetrics();
         processDetailMetrics();
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+             BufferedWriter failWriter = new BufferedWriter(new FileWriter(failedSqlFile))) {
             writer.write(reportInfo.toString());
             writer.flush();
+            failWriter.write("failed queryId");
+            for (String queryId : metricsCollector.getFailedSets()) {
+                failWriter.newLine();
+                failWriter.write(queryId);
+            }
+            failWriter.flush();
             String endString = String.format("\n\n________ %-20s%s _______ \n\n", " Benchmark Report has been stored at :", file.getAbsolutePath());
             System.out.println(colorfulText(endString, "36"));
         } catch (Exception e) {
@@ -49,7 +58,7 @@ public class ConsoleExportService implements ExportService {
         Histogram totalHistogram = metricsCollector.getTotalHistogram();
         System.out.println(colorfulText("========== Dry-Run-Benchmark-Report ==========", "32"));
         String overviewInfo = String.format("\n***** Overview *****") +
-                String.format("\n%-15s %d", "Queries_Count：", snapshot.getValues().length) +
+                String.format("\n%-15s %d", "Queries_Count：", totalHistogram.getCount()) +
                 String.format(" \n%-15s %d", "Concurrency：", config.getCONCURRENCY()) +
                 String.format(" \n%-15s %s", "KE_Node：", config.getKYLIN_QUERY_NODE());
         System.out.println(colorfulText(overviewInfo, "32"));
@@ -61,6 +70,7 @@ public class ConsoleExportService implements ExportService {
 
         String totalInfo = String.format("\n\n===== Total_Info =====") +
                 String.format("\n%-15s %d", "Total_Count：", totalHistogram.getCount()) +
+                String.format("\n%-15s %d", "Rounds：", config.getROUNDS()) +
                 String.format("\n%-15s %d", "Success：", metricsCollector.getTotalSuccess().get()) +
                 String.format("\n%-15s %d", "Failed：", metricsCollector.getTotalFailed().get()) +
                 String.format(" \n%-15s %.2f", "Avg_Duration：", snapshot.getMean()) +
@@ -95,7 +105,7 @@ public class ConsoleExportService implements ExportService {
             });
             String totalInfo = String.format("----------------------------------------" +
                     "\n\n\n--- Round%d ---", k) +
-                    String.format("\n%-15s %d", "Total_Count：", snapshot.size()) +
+//                    String.format("\n%-15s %d", "Total_Count：", snapshot.size()) +
                     String.format("\n%-15s %d", "Success：", v.getSuccessCnt()) +
                     String.format("\n%-15s %d", "Failed：", v.getFailedCnt()) +
                     String.format(" \n%-15s %.2f", "Avg_Duration：", snapshot.getMean()) +

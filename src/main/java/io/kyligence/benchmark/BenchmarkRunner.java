@@ -3,7 +3,8 @@ package io.kyligence.benchmark;
 import au.com.bytecode.opencsv.bean.CsvToBean;
 import au.com.bytecode.opencsv.bean.HeaderColumnNameMappingStrategy;
 import io.kyligence.benchmark.entity.QueryHistoryDTO;
-import io.kyligence.benchmark.service.ExportService;
+import io.kyligence.benchmark.service.ConsoleExportService;
+import io.kyligence.benchmark.service.CsvExportService;
 import io.kyligence.benchmark.service.MetricsCollector;
 import io.kyligence.benchmark.task.QueryTask;
 import io.kyligence.benchmark.utils.ProgressBarUtil;
@@ -31,7 +32,10 @@ public class BenchmarkRunner implements ApplicationRunner {
     @Autowired
     MetricsCollector metricCollector;
     @Autowired
-    ExportService exportService;
+    ConsoleExportService consoleExportService;
+    @Autowired
+    CsvExportService csvExportService;
+
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
@@ -62,11 +66,10 @@ public class BenchmarkRunner implements ApplicationRunner {
                 }
                 // progress bar
                 while (latch.getCount() > 0) {
-                    ProgressBarUtil.printProgressBar(String.format("Current Project : %-40s ", csv.getName())
-                            , (int) Math.ceil((currentTotal - latch.getCount()) * 100 / currentTotal));
+                    ProgressBarUtil.printProgressBar(String.format("Current Project : %-40s ", csv.getName()), (int) Math.ceil((currentTotal - latch.getCount()) * 100 / currentTotal), currentTotal - latch.getCount(), currentTotal);
                     Thread.sleep(500);
                 }
-                ProgressBarUtil.printProgressBar(String.format("Current Project : %-40s ", csv.getName()), 100);
+                ProgressBarUtil.printProgressBar(String.format("Current Project : %-40s ", csv.getName()), 100, currentTotal, currentTotal);
                 System.out.println();
                 latch.await();
             }
@@ -74,7 +77,8 @@ public class BenchmarkRunner implements ApplicationRunner {
             metricCollector.endRound();
             round++;
         }
-        exportService.export();
+        consoleExportService.export();
+        csvExportService.export();
         log.info("[STATUS]: ==========\tbenchmark finished\t==========");
         System.exit(0);
         // TODO 可以写个生产者消费者模式

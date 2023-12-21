@@ -4,6 +4,7 @@ import com.codahale.metrics.ConsoleReporter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import io.kyligence.benchmark.BenchmarkConfig;
 import io.kyligence.benchmark.entity.QueryRequest;
 import io.kyligence.benchmark.entity.QueryResponse;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -52,6 +54,8 @@ public class MetricsCollector {
     private AtomicInteger totalSuccess;
     @Getter
     private AtomicInteger totalFailed;
+    @Getter
+    private Set<String> failedSets;
 
 
     /**
@@ -82,6 +86,7 @@ public class MetricsCollector {
         this.round = 0;
         this.totalSuccess = new AtomicInteger();
         this.totalFailed = new AtomicInteger();
+        this.failedSets = Sets.newConcurrentHashSet();
         totalHistogram = registry.histogram("total.histogram");
         stepHistogramMap = Maps.newTreeMap((a1, a2) -> {
             return a1.getSequence() - a2.getSequence();
@@ -136,10 +141,11 @@ public class MetricsCollector {
         Long duration = response.getDuration();
         List<SQLResponseTrace> metricsList = response.getTraces();
         // success & failed count
-        if(response.isException()){
+        if (response.isException()) {
             this.totalFailed.incrementAndGet();
             this.roundFailed.incrementAndGet();
-        }else{
+            this.failedSets.add(request.getQueryId());
+        } else {
             this.totalSuccess.incrementAndGet();
             this.roundSuccess.incrementAndGet();
         }
@@ -152,7 +158,7 @@ public class MetricsCollector {
             this.maxQuerySql = request.getSql();
         }
         Map<String, SQLResponseTrace> metricsMap = metricsList.stream()
-                .collect(Collectors.toMap(SQLResponseTrace::getName, p -> p));
+                .collect(Collectors.toMap(m -> m.getName(), p -> p, (a, b) -> a));
         // ! 没有经历的Step 也收集下信息，方便后面详情的时候可以清楚的看到那些Step没有经历
         stepHistogramMap.forEach((k, v) -> {
             val metrics = metricsMap.get(k.getName());

@@ -1,9 +1,10 @@
 package io.kyligence.benchmark.utils;
+
 public class ProgressBarUtil {
 
 
-    public static void printProgressBar(String message,int progress) {
-        System.out.print("\r"+message+"  Progress: [");
+    public static void printProgressBar(String message, int progress, long current, long total) {
+        System.out.print("\r" + message + "  Progress: [");
         int numChars = progress / 2;
 
         for (int i = 0; i < 50; i++) {
@@ -16,7 +17,7 @@ public class ProgressBarUtil {
             }
         }
 
-        System.out.print("] " + progress + "%");
+        System.out.print("] " + progress + "%  " + current + "/" + total);
     }
 
     private static void simulateTaskExecution() {
@@ -33,7 +34,7 @@ public class ProgressBarUtil {
 
         for (int currentStep = 0; currentStep <= totalSteps; currentStep++) {
             int progress = (currentStep * 100) / totalSteps;
-            printProgressBar("test",progress);
+            printProgressBar("test", progress, currentStep, totalSteps);
             // 模拟任务执行
             simulateTaskExecution();
         }
