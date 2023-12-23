@@ -32,7 +32,7 @@ public class HttpUtil {
     private static final int MAX_TOTAL = 600;
     private static final int MAX_PER_ROUTE = 300;
     private static final int CONNECT_TIMEOUT = 6000;
-    private static final int SOCKET_TIMEOUT = 60000;
+    private static final int SOCKET_TIMEOUT = 20000;
 
     // 连接池管理器
     private static PoolingHttpClientConnectionManager connectionManager = null;
@@ -46,7 +46,7 @@ public class HttpUtil {
             //跳过SSL证书认证策略
             SSLConnectionSocketFactory sslFactory = createMySSLConnectionSocketFactory();
             // 配置同时支持 HTTP 和 HTTPS
-            Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory> create()
+            Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
                     .register("http", PlainConnectionSocketFactory.getSocketFactory()).register("https", sslFactory)
                     .build();
             // 创建连接池管理器对象
@@ -139,7 +139,7 @@ public class HttpUtil {
             log.debug("[http-call]-[{}]-[status:{}]", url, response.getStatusLine().getStatusCode());
             //处理返回结果
             if (response.getStatusLine().getStatusCode() < 200 || response.getStatusLine().getStatusCode() > 300) {
-                log.error("[http-call]-[{}]-[error]:{}", url, EntityUtils.toString(response.getEntity(), "UTF-8"));
+                log.error("[http-call]-[{}]-[status-error]:{}", url, EntityUtils.toString(response.getEntity(), "UTF-8"));
                 throw new HttpRequestException(result);
             }
             HttpEntity entity = response.getEntity();
@@ -148,7 +148,7 @@ public class HttpUtil {
             }
             EntityUtils.consume(entity);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("other errors, query params:{}", json, e);
             throw new HttpRequestException("httpclient IO error!", "42000");
         } finally {
             close(response);

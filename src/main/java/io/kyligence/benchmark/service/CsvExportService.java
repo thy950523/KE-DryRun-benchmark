@@ -47,7 +47,7 @@ public class CsvExportService implements ExportService {
         Histogram totalHistogram = metricsCollector.getTotalHistogram();
         String[] strs = new String[40];
         ArrayList<String> list = Lists.newArrayList();
-        list.add(String.valueOf(timeStamp));
+        list.add(config.getKYLIN_QUERY_NODE());
         list.add(String.valueOf(timeStamp));
         list.add("total");
         list.add(String.valueOf(config.getROUNDS()));

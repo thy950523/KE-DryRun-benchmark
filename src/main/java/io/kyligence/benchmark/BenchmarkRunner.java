@@ -66,10 +66,14 @@ public class BenchmarkRunner implements ApplicationRunner {
                 }
                 // progress bar
                 while (latch.getCount() > 0) {
-                    ProgressBarUtil.printProgressBar(String.format("Current Project : %-40s ", csv.getName()), (int) Math.ceil((currentTotal - latch.getCount()) * 100 / currentTotal), currentTotal - latch.getCount(), currentTotal);
+                    ProgressBarUtil.printProgressBar(
+                            String.format("Current Project : %-45s, failed: %6d ", csv.getName(),metricCollector.getTotalFailed().get()),
+                            (int) Math.ceil((currentTotal - latch.getCount()) * 100 / currentTotal), currentTotal - latch.getCount(), currentTotal);
                     Thread.sleep(500);
                 }
-                ProgressBarUtil.printProgressBar(String.format("Current Project : %-40s ", csv.getName()), 100, currentTotal, currentTotal);
+                ProgressBarUtil.printProgressBar(
+                        String.format("Current Project : %-45s, failed: %6d ", csv.getName(),metricCollector.getTotalFailed().get()),
+                        100, currentTotal, currentTotal);
                 System.out.println();
                 latch.await();
             }

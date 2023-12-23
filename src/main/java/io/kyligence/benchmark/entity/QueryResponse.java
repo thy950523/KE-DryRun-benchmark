@@ -18,11 +18,11 @@
 
 package io.kyligence.benchmark.entity;
 
-import java.io.Serializable;
-import java.util.List;
-
 import lombok.Getter;
 import lombok.Setter;
+
+import java.io.Serializable;
+import java.util.List;
 
 @Getter
 @Setter
@@ -100,4 +100,9 @@ public class QueryResponse implements Serializable {
     private String executedPlan;
 
     private boolean isBigQuery = false;
+
+
+//    public static failResponse(){
+//
+//    }
 }

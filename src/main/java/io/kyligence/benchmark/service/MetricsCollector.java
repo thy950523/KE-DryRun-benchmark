@@ -145,6 +145,8 @@ public class MetricsCollector {
             this.totalFailed.incrementAndGet();
             this.roundFailed.incrementAndGet();
             this.failedSets.add(request.getQueryId());
+            // 不计入统计时间
+            return;
         } else {
             this.totalSuccess.incrementAndGet();
             this.roundSuccess.incrementAndGet();
