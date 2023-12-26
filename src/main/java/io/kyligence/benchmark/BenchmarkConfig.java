@@ -51,6 +51,14 @@ public class BenchmarkConfig {
     @Value("${report.output.dir:.}")
     public String REPORT_OUTPUT_DIR;
 
+    /**
+     * 错误请求过滤器配置
+     */
+    @Value("${query.exception.filter.enabled:false}")
+    public boolean EXCEPTION_FILTER_ENABLED;
+    @Value("${query.exception.filter.regex:}")
+    public String EXCEPTION_FILTER_REGEX;
+
 
     public boolean checkArgs() {
         try {
