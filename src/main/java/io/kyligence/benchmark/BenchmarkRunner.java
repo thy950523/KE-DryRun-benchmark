@@ -44,7 +44,6 @@ public class BenchmarkRunner implements ApplicationRunner {
         if (!benchmarkConfig.checkArgs()) {
             System.exit(1);
         }
-
         int round = 1;
         // * rounds start
         while (round <= benchmarkConfig.ROUNDS) {

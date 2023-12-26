@@ -1,5 +1,6 @@
 package io.kyligence.benchmark.service;
 
+import cn.hutool.core.date.DateUtil;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Snapshot;
 import io.kyligence.benchmark.BenchmarkConfig;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.StringJoiner;
 
@@ -28,9 +30,13 @@ public class ConsoleExportService implements ExportService {
 
     @Override
     public void export() {
-        long timeStamp = System.currentTimeMillis();
-        File file = new File(config.getREPORT_OUTPUT_DIR() + File.separator + "benchmark-report-" + timeStamp + ".txt");
-        File failedSqlFile = new File(config.getREPORT_OUTPUT_DIR() + File.separator + "benchmark-report-" + timeStamp + "-fail.txt");
+        File dir = new File(config.getREPORT_OUTPUT_DIR());
+        if (!dir.exists()) {
+            dir.mkdir();
+        }
+        String endAt = DateUtil.format(metricsCollector.getEndAt(),"YYYY-MM-dd_HH:mm:ss");
+        File file = new File(config.getREPORT_OUTPUT_DIR() + File.separator + "benchmark-report-" + endAt + ".txt");
+        File failedSqlFile = new File(config.getREPORT_OUTPUT_DIR() + File.separator + "benchmark-report-" + endAt + "-fail.txt");
         reportInfo = new StringBuilder();
         log.info("[ REPORT ] ==========\tbenchmark report is as follow : ==========\t");
         processTotalMetrics();
@@ -73,6 +79,7 @@ public class ConsoleExportService implements ExportService {
                 String.format("\n%-15s %d", "Rounds：", config.getROUNDS()) +
                 String.format("\n%-15s %d", "Success：", metricsCollector.getTotalSuccess().get()) +
                 String.format("\n%-15s %d", "Failed：", metricsCollector.getTotalFailed().get()) +
+                String.format("\n%-15s %s", "Total_Duration：", DateUtil.formatBetween(metricsCollector.getTotalDuration())) +
                 String.format(" \n%-15s %.2f", "Avg_Duration：", snapshot.getMean()) +
                 String.format(" \n%-15s %d", "Min_Duration：", snapshot.getMin()) +
                 String.format(" \n%-15s %d", "Max_Duration：", snapshot.getMax()) +
@@ -105,9 +112,9 @@ public class ConsoleExportService implements ExportService {
             });
             String totalInfo = String.format("----------------------------------------" +
                     "\n\n\n--- Round%d ---", k) +
-//                    String.format("\n%-15s %d", "Total_Count：", snapshot.size()) +
                     String.format("\n%-15s %d", "Success：", v.getSuccessCnt()) +
                     String.format("\n%-15s %d", "Failed：", v.getFailedCnt()) +
+                    String.format("\n%-15s %s", "Total_Duration：", DateUtil.formatBetween(v.getDuration())) +
                     String.format(" \n%-15s %.2f", "Avg_Duration：", snapshot.getMean()) +
                     String.format(" \n%-15s %d", "Min_Duration：", snapshot.getMin()) +
                     String.format(" \n%-15s %d", "Max_Duration：", snapshot.getMax()) +

@@ -18,6 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -56,6 +58,10 @@ public class MetricsCollector {
     private AtomicInteger totalFailed;
     @Getter
     private Set<String> failedSets;
+    @Getter
+    private Long totalDuration;
+    @Getter
+    private LocalDateTime endAt;
 
 
     /**
@@ -70,6 +76,7 @@ public class MetricsCollector {
     private String maxRoundQuerySql;
     private AtomicInteger roundSuccess;
     private AtomicInteger roundFailed;
+    private Long roundStartAt;
     private List<SQLResponseTrace> maxRoundQueryTraceList;
 
 
@@ -86,6 +93,7 @@ public class MetricsCollector {
         this.round = 0;
         this.totalSuccess = new AtomicInteger();
         this.totalFailed = new AtomicInteger();
+        this.totalDuration = 0L;
         this.failedSets = Sets.newConcurrentHashSet();
         totalHistogram = registry.histogram("total.histogram");
         stepHistogramMap = Maps.newTreeMap((a1, a2) -> {
@@ -120,6 +128,7 @@ public class MetricsCollector {
         this.maxRoundQuerySql = null;
         this.roundSuccess = new AtomicInteger();
         this.roundFailed = new AtomicInteger();
+        this.roundStartAt = System.currentTimeMillis();
     }
 
     public void endRound() {
@@ -131,10 +140,13 @@ public class MetricsCollector {
         roundMetricsSnapshot.setMaxQuerySql(this.maxRoundQuerySql);
         roundMetricsSnapshot.setSuccessCnt(this.roundSuccess.get());
         roundMetricsSnapshot.setFailedCnt(this.roundFailed.get());
+        roundMetricsSnapshot.setDuration(System.currentTimeMillis() - this.roundStartAt);
+        this.totalDuration += roundMetricsSnapshot.getDuration();
         roundStepHistogramMap.forEach((k, v) -> {
             roundMetricsSnapshot.addStepSnapshot(k, v.getSnapshot());
         });
         roundSnapshotMap.put(round, roundMetricsSnapshot);
+        endAt = LocalDateTime.now();
     }
 
     public void collect(QueryRequest request, QueryResponse response) {

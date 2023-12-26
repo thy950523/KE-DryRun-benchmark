@@ -25,6 +25,7 @@ public class RoundMetricsSnapshot {
     private List<SQLResponseTrace> maxQueryTraceList;
     private Integer successCnt;
     private Integer failedCnt;
+    private Long duration;
 
     public RoundMetricsSnapshot(Integer round) {
         this.round = round;

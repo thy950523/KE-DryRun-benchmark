@@ -1,6 +1,7 @@
 package io.kyligence.benchmark.service;
 
 import au.com.bytecode.opencsv.CSVWriter;
+import cn.hutool.core.date.DateUtil;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Snapshot;
 import com.google.common.collect.Lists;
@@ -27,13 +28,13 @@ public class CsvExportService implements ExportService {
 
     @Override
     public void export() {
-        long timeStamp = System.currentTimeMillis();
-        File file = new File(config.getREPORT_OUTPUT_DIR() + File.separator + "benchmark-report-" + timeStamp + ".csv");
+        String endAt = DateUtil.format(metricsCollector.getEndAt(),"YYYY-MM-dd_HH:mm:ss");
+        File file = new File(config.getREPORT_OUTPUT_DIR() + File.separator + "benchmark-report-" + endAt + ".csv");
 
         log.info("[ REPORT ] ==========\twriting metrics info to  csv file ==========\t");
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file));
              CSVWriter csvWriter = new CSVWriter(writer)) {
-            csvWriter.writeNext(getTotalMetrics(timeStamp));
+            csvWriter.writeNext(getTotalMetrics(endAt));
 //            csvWriter.writeAll(getRoundsMetrics(timeStamp));
             csvWriter.flush();
         } catch (Exception e) {
@@ -42,7 +43,7 @@ public class CsvExportService implements ExportService {
 
     }
 
-    public String[] getTotalMetrics(long timeStamp) {
+    public String[] getTotalMetrics(String timeStamp) {
         Snapshot snapshot = metricsCollector.getTotalHistogram().getSnapshot();
         Histogram totalHistogram = metricsCollector.getTotalHistogram();
         String[] strs = new String[40];
