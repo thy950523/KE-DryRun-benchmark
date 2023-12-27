@@ -23,7 +23,7 @@ public class QueryTask implements Runnable {
     private MetricsCollector metricCollector;
     private BenchmarkConfig benchmarkConfig;
 
-    private static String QUERY_API_URL = "/kylin/api/query";
+    public static String QUERY_API_URL = "/kylin/api/query";
     private Integer round;
     /**
      * query-id

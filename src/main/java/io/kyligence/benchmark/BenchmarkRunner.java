@@ -62,6 +62,9 @@ public class BenchmarkRunner implements ApplicationRunner {
                 for (QueryHistoryDTO qh : queryHistoryDTOList) {
                     // wrap queryTask
                     executor.submit(new QueryTask(qh, round, latch));
+                    ProgressBarUtil.printProgressBar(
+                            String.format("Current Project : %-45s, failed: %6d ", csv.getName(),metricCollector.getTotalFailed().get()),
+                            (int) Math.ceil((currentTotal - latch.getCount()) * 100 / currentTotal), currentTotal - latch.getCount(), currentTotal);
                 }
                 // progress bar
                 while (latch.getCount() > 0) {
