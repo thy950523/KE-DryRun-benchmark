@@ -3,6 +3,7 @@ package io.kyligence.benchmark.service;
 import com.codahale.metrics.ConsoleReporter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SlidingWindowReservoir;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import io.kyligence.benchmark.BenchmarkConfig;
@@ -30,9 +31,6 @@ import java.util.stream.Collectors;
 @Component
 @Slf4j
 public class MetricsCollector {
-
-    @Autowired
-    private BenchmarkConfig benchmarkConfig;
 
     private Integer round;
     /**
@@ -95,7 +93,9 @@ public class MetricsCollector {
         this.totalFailed = new AtomicInteger();
         this.totalDuration = 0L;
         this.failedSets = Sets.newConcurrentHashSet();
-        totalHistogram = registry.histogram("total.histogram");
+//        totalHistogram = registry.histogram("total.histogram");
+        totalHistogram = new Histogram(new SlidingWindowReservoir(1_000_000));
+        registry.register("total.histogram", totalHistogram);
         stepHistogramMap = Maps.newTreeMap((a1, a2) -> {
             return a1.getSequence() - a2.getSequence();
         });
@@ -105,6 +105,8 @@ public class MetricsCollector {
         for (QuerySpanEnum step : QuerySpanEnum.values()) {
             if (step.isNeedMetric()) {
                 String histogramName = String.format("total.%s.histogram", step.getName());
+                Histogram histogram = new Histogram(new SlidingWindowReservoir(1_000_000));
+                registry.register(step.getName(), histogram);
                 stepHistogramMap.put(step, registry.histogram(histogramName));
             }
         }
@@ -116,10 +118,14 @@ public class MetricsCollector {
      */
     public void startRound() {
         round++;
-        roundHistogram = registry.histogram("round." + round + ".histogram");
+//        roundHistogram = registry.histogram("round." + round + ".histogram");
+        roundHistogram = new Histogram(new SlidingWindowReservoir(1_000_000));
+        registry.register("round." + round + ".histogram", roundHistogram);
         for (QuerySpanEnum step : QuerySpanEnum.values()) {
             if (step.isNeedMetric()) {
                 String histogramName = String.format("round.%d.%s.histogram", round, step.getName());
+                Histogram histogram = new Histogram(new SlidingWindowReservoir(1_000_000));
+                registry.register(histogramName, histogram);
                 roundStepHistogramMap.put(step, registry.histogram(histogramName));
             }
         }
@@ -152,7 +158,7 @@ public class MetricsCollector {
     public void collect(QueryRequest request, QueryResponse response) {
         Long duration = response.getDuration();
         List<SQLResponseTrace> metricsList = response.getTraces();
-        // success & failed count
+        // * success & failed count
         if (response.isException()) {
             this.totalFailed.incrementAndGet();
             this.roundFailed.incrementAndGet();

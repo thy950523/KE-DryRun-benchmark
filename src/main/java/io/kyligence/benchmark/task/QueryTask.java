@@ -58,9 +58,8 @@ public class QueryTask implements Runnable {
 
             // * metric collect
             metricCollector.collect(queryRequest, response);
-//        }catch (HttpRequestException e){
-//            QueryResponse response = new QueryResponse();
         } catch (Exception e) {
+
             log.error("query process with err", e);
         }finally {
             latch.countDown();

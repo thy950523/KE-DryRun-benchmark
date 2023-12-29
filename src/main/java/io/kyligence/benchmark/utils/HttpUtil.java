@@ -31,8 +31,8 @@ public class HttpUtil {
 
     private static final int MAX_TOTAL = 600;
     private static final int MAX_PER_ROUTE = 300;
-    private static final int CONNECT_TIMEOUT = 6000;
-    private static final int SOCKET_TIMEOUT = 20000;
+    private static final int CONNECT_TIMEOUT = 300000;
+    private static final int SOCKET_TIMEOUT = 300000;
 
     // 连接池管理器
     private static PoolingHttpClientConnectionManager connectionManager = null;

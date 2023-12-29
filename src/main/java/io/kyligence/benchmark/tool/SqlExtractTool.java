@@ -10,6 +10,7 @@ import io.kyligence.benchmark.exception.HttpRequestException;
 import io.kyligence.benchmark.task.QueryTask;
 import io.kyligence.benchmark.utils.HttpUtil;
 import io.kyligence.benchmark.utils.ProgressBarUtil;
+import org.checkerframework.checker.units.qual.C;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -20,6 +21,7 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
@@ -32,6 +34,7 @@ public class SqlExtractTool {
 
     private static ThreadPoolExecutor executor;
     private static ReentrantLock writeLock = new ReentrantLock(true);
+    private static CountDownLatch latch = null;
     private static Integer total = 0;
     private static Integer success = 0;
     private static Integer failed = 0;
@@ -54,13 +57,23 @@ public class SqlExtractTool {
                     "query_time", "project_name"};
             writer.writeNext(header);
             for (String sql = reader.readLine(); !StrUtil.isEmptyIfStr(sql); sql = reader.readLine()) {
-                System.out.print("\r"+"已解析 " + (++total) + "条SQL");
+                System.out.print("\r" + "已解析 " + (++total) + "条SQL");
                 String finalSql = sql;
                 executor.submit(() -> {
+                    // wait latch
+                    while (null == latch) {
+                        try {
+                            Thread.sleep(300);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+
                     // sendRequest
                     QueryResponse respons = sendQueryRequset(finalSql, keNode, project, userName, passwd);
                     if (null == respons || respons.isException() || !"NATIVE".equalsIgnoreCase(respons.getEngineType())) {
                         failed++;
+                        latch.countDown();
                         return;
                     }
                     // 并发控制写文件
@@ -76,21 +89,26 @@ public class SqlExtractTool {
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     } finally {
+                        latch.countDown();
                         writeLock.unlock();
                     }
                 });
             }
-            System.out.print("\r"+"已解析 " + total + "条SQL");
+            System.out.print("\r" + "已解析 " + total + "条SQL");
             System.out.println("\n");
-            while (executor.getTaskCount() > 0) {
+            latch = new CountDownLatch(total);
+            while (latch.getCount() > 0) {
                 ProgressBarUtil.printProgressBar(String.format(" extracting ... - success:%d", success),
                         (int) Math.ceil((success + failed) * 100 / total), success + failed, total);
                 Thread.sleep(500);
             }
+            ProgressBarUtil.printProgressBar(String.format(" extracting ... - success:%d", success),
+                    (int) Math.ceil((success + failed) * 100 / total), success + failed, total);
+            System.out.println("\n");
         } catch (Exception e) {
             e.printStackTrace();
         }
-
+        System.exit(0);
     }
 
     /**
