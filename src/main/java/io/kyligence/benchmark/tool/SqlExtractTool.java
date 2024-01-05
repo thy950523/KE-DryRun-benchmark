@@ -1,15 +1,20 @@
 package io.kyligence.benchmark.tool;
 
+import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.CSVWriter;
+import au.com.bytecode.opencsv.bean.CsvToBean;
+import au.com.bytecode.opencsv.bean.HeaderColumnNameMappingStrategy;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Maps;
+import io.kyligence.benchmark.entity.QueryHistoryDTO;
 import io.kyligence.benchmark.entity.QueryRequest;
 import io.kyligence.benchmark.entity.QueryResponse;
 import io.kyligence.benchmark.exception.HttpRequestException;
 import io.kyligence.benchmark.task.QueryTask;
 import io.kyligence.benchmark.utils.HttpUtil;
 import io.kyligence.benchmark.utils.ProgressBarUtil;
+import lombok.AllArgsConstructor;
 import org.checkerframework.checker.units.qual.C;
 
 import java.io.BufferedReader;
@@ -18,6 +23,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -50,49 +56,30 @@ public class SqlExtractTool {
         executor = new ThreadPoolExecutor(10, 10, 30, TimeUnit.SECONDS,
                 new ArrayBlockingQueue<>(100000, true));
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
-        // parse txt
         try (BufferedReader reader = new BufferedReader(new FileReader(inputFilePath));
              CSVWriter writer = new CSVWriter(new FileWriter(outputFilePath))) {
             String[] header = new String[]{"query_id", "sql_pattern", "duration", "server", "engine_type",
                     "query_time", "project_name"};
             writer.writeNext(header);
-            for (String sql = reader.readLine(); !StrUtil.isEmptyIfStr(sql); sql = reader.readLine()) {
-                System.out.print("\r" + "已解析 " + (++total) + "条SQL");
-                String finalSql = sql;
-                executor.submit(() -> {
-                    // wait latch
-                    while (null == latch) {
-                        try {
-                            Thread.sleep(300);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-
-                    // sendRequest
-                    QueryResponse respons = sendQueryRequset(finalSql, keNode, project, userName, passwd);
-                    if (null == respons || respons.isException() || !"NATIVE".equalsIgnoreCase(respons.getEngineType())) {
-                        failed++;
-                        latch.countDown();
-                        return;
-                    }
-                    // 并发控制写文件
-                    writeLock.lock();
-                    try {
-                        String[] data = new String[]{
-                                respons.getQueryId(), finalSql, String.valueOf(respons.getDuration()), keNode,
-                                respons.getEngineType(), String.valueOf(System.currentTimeMillis()), project
-                        };
-                        writer.writeNext(data);
-                        writer.flush();
-                        success++;
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    } finally {
-                        latch.countDown();
-                        writeLock.unlock();
-                    }
-                });
+            // *process csv file
+            if (inputFilePath.endsWith(".csv")) {
+                HeaderColumnNameMappingStrategy strategy = new HeaderColumnNameMappingStrategy<>();
+                strategy.setType(QueryHistoryDTO.class);
+                CsvToBean csvToBean = new CsvToBean<>();
+                List<QueryHistoryDTO> queryHistoryDTOList = csvToBean.parse(strategy, reader);
+                total = queryHistoryDTOList.size();
+                System.out.print("\r" + "已解析 " + total + "条SQL");
+                for (QueryHistoryDTO qh : queryHistoryDTOList) {
+                    String finalSql = qh.getSql_pattern();
+                    executor.submit(new ExtractTask(keNode, project, userName, passwd, finalSql, writer));
+                }
+            } else {
+                // *process txt file
+                for (String sql = reader.readLine(); !StrUtil.isEmptyIfStr(sql); sql = reader.readLine()) {
+                    System.out.print("\r" + "已解析 " + (++total) + "条SQL");
+                    String finalSql = sql;
+                    executor.submit(new ExtractTask(keNode, project, userName, passwd, finalSql, writer));
+                }
             }
             System.out.print("\r" + "已解析 " + total + "条SQL");
             System.out.println("\n");
@@ -132,6 +119,54 @@ public class SqlExtractTool {
         } finally {
             return response;
         }
+    }
+
+
+    @AllArgsConstructor
+    static class ExtractTask implements Runnable{
+        private String keNode;
+        private String project;
+        private String userName;
+        private String passwd;
+        private String finalSql;
+        private CSVWriter writer;
+
+
+        @Override
+        public void run() {
+            // wait latch
+            while (null == latch) {
+                try {
+                    Thread.sleep(300);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            // sendRequest
+            QueryResponse respons = sendQueryRequset(finalSql, keNode, project, userName, passwd);
+            if (null == respons || respons.isException() || !"NATIVE".equalsIgnoreCase(respons.getEngineType())) {
+                failed++;
+                latch.countDown();
+                return;
+            }
+            // 并发控制写文件
+            writeLock.lock();
+            try {
+                String[] data = new String[]{
+                        respons.getQueryId(), finalSql, String.valueOf(respons.getDuration()), keNode,
+                        respons.getEngineType(), String.valueOf(System.currentTimeMillis()), project
+                };
+                writer.writeNext(data);
+                writer.flush();
+                success++;
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } finally {
+                latch.countDown();
+                writeLock.unlock();
+            }
+        };
     }
 
 }

@@ -19,7 +19,7 @@ public class ThreadPoolConfig {
 
     @Bean("executor")
     public ThreadPoolExecutor threadPoolExecutor() {
-        val threadPoolExecutor = new ThreadPoolExecutor(config.CONCURRENCY, config.CONCURRENCY, 15, TimeUnit.SECONDS,
+        val threadPoolExecutor = new ThreadPoolExecutor(config.CONCURRENCY, config.CONCURRENCY, 1, TimeUnit.MINUTES,
                 new ArrayBlockingQueue<>(config.QUEUE_SIZE));
         threadPoolExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         return threadPoolExecutor;
